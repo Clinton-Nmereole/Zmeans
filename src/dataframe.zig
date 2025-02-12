@@ -39,7 +39,7 @@ pub fn parse(comptime T: type, buffer: []const u8) ParseError!T {
 
 pub fn init_From_Pair(comptime T: type, a: anytype, b: anytype) T {
     var t = std.mem.zeroInit(T, a);
-    inline for (@typeInfo(@TypeOf(b)).Struct.fields) |field| {
+    inline for (@typeInfo(@TypeOf(b)).@"struct".fields) |field| {
         @field(t, field.name) = @field(b, field.name);
     }
     return t;
@@ -47,7 +47,7 @@ pub fn init_From_Pair(comptime T: type, a: anytype, b: anytype) T {
 
 fn initSubset(comptime T: type, a: anytype) T {
     var t = std.mem.zeroInit(T, .{});
-    inline for (@typeInfo(T).Struct.fields) |field| {
+    inline for (@typeInfo(T).@"struct".fields) |field| {
         if (@hasField(@TypeOf(a), field.name)) {
             @field(t, field.name) = @field(a, field.name);
         }
@@ -65,10 +65,10 @@ pub fn init_Series(comptime T: type) type {
 }
 
 pub fn DataFrame(comptime ColumnLabels: type, comptime RowLabels: type) type {
-    if (@typeInfo(RowLabels) != .Struct) {
+    if (@typeInfo(RowLabels) != .@"struct") {
         @compileError("RowLabels must be a struct, not " ++ @typeName(ColumnLabels));
     }
-    if (@typeInfo(ColumnLabels) != .Struct) {
+    if (@typeInfo(ColumnLabels) != .@"struct") {
         @compileError("ColumnLabels must be a struct, not " ++ @typeName(RowLabels));
     }
 
@@ -89,12 +89,12 @@ pub fn DataFrame(comptime ColumnLabels: type, comptime RowLabels: type) type {
         const Self = @This();
         const RowType = RowLabels;
         const ColumnType = ColumnLabels;
-        const DataType = @Type(TypeInfo{ .Struct = .{ .layout = .Auto, .fields = dataFields, .decls = &[0]TypeInfo.Declaration{}, .is_tuple = false } });
+        const DataType = @Type(TypeInfo{ .@"struct" = .{ .layout = .auto, .fields = dataFields, .decls = &[0]TypeInfo.Declaration{}, .is_tuple = false } });
 
         const DataArray = std.ArrayList(DataType);
 
         pub fn init_Empty(allocator: std.mem.Allocator) !Self {
-            var self = Self{
+            const self = Self{
                 .data = DataArray.init(allocator),
             };
             return self;
@@ -142,7 +142,7 @@ pub fn DataFrame(comptime ColumnLabels: type, comptime RowLabels: type) type {
                     const value = try parse(field.type, cell);
                     @field(entry, field.name) = value;
                 }
-                var index = std.mem.zeroInit(RowLabels, .{});
+                const index = std.mem.zeroInit(RowLabels, .{});
                 try self.append(index, entry);
             }
 
@@ -150,7 +150,7 @@ pub fn DataFrame(comptime ColumnLabels: type, comptime RowLabels: type) type {
         }
 
         pub fn append(self: *Self, index: RowLabels, data: ColumnLabels) !void {
-            var d = init_From_Pair(DataType, index, data);
+            const d = init_From_Pair(DataType, index, data);
             try self.data.append(d);
         }
 
@@ -186,9 +186,9 @@ pub fn DataFrame(comptime ColumnLabels: type, comptime RowLabels: type) type {
 }
 
 pub fn main() !void {
-    var gpa2 = std.heap.GeneralPurposeAllocator(.{}){};
-    var gpa2_allocator = gpa2.allocator();
-    _ = gpa2_allocator;
+    //var gpa2 = std.heap.GeneralPurposeAllocator(.{}){};
+    //var gpa2_allocator = gpa2.allocator();
+    //_ = gpa2_allocator;
     const Stats = struct {
         goals: u32,
         assists: u32,
